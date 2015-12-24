@@ -1,0 +1,95 @@
+import React from 'react'
+import classnames from 'classnames'
+import autobind from 'autobind-decorator'
+import styles from '../css/component.css'
+import d3 from 'd3'
+import topojson from 'topojson'
+//import D3 from 'react-d3-map'
+
+@autobind
+class D3MapComponent extends React.Component {
+  constructor(props) {
+    super(props)
+    this.state = {
+
+    }
+  }
+
+  componentDidMount() {
+  // Artificially delay the loading, so the loading state stays visible for a while.
+  setTimeout(this.loadData, 2000);
+  }
+
+  loadData() {
+    //d3.json("/components/d3map/upload/liangshan.json", this.dataLoaded);
+    d3.json("/components/d3map/liangshan.json", this.dataLoaded);
+  }
+
+  dataLoaded(err, data) {
+    if (err) return this.setState({error: err});
+    this.setState({data: data});
+  }
+
+  render() {
+
+
+    if (this.state.error) return React.DOM.div({className: 'message message--error'}, 'Whoops! ' + this.props.url + ' does not exist. Reload the page to try again.');
+    if (!this.state.data) return React.DOM.div({className: 'message'}, 'Loading ' + this.props.url);
+
+
+    // I prefer aliasing DOM elements over jsx
+
+    var svg = React.DOM.svg;
+    var g = React.DOM.g;
+    var path = React.DOM.path;
+
+    // create the path generator
+    var pathGenerator = d3.geo.path().projection(null);
+
+    return (
+      <div {...this.props}>
+      {
+        svg({
+             className: "choropleth",
+             width: this.props.width,
+             height: this.props.height
+           }),
+               g({
+                 className: "counties"
+               },
+                 _.map(this.state.counties, function(country) {
+                   return path({
+                     className: cmp.quantize(cmp.rateById.get(country.id)),
+                     d: pathGenerator(country)
+                   });
+                 })),
+               path({
+                 className: "states",
+                 d: this.path(this.state.states)
+               })
+      }
+      </div>
+    )
+
+  }
+
+
+  toJson() {
+    // return the data you want to save as an object
+    return {
+
+    }
+  }
+}
+
+// ExampleComponent.propTypes = {
+//   master: React.PropTypes.object
+// , edit: React.PropTypes.bool
+// }
+//
+// ExampleComponent.defaultProps = {
+//   master: {}
+// , edit: false
+// }
+
+export default D3MapComponent
