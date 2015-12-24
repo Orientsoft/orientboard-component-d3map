@@ -3,12 +3,7 @@ import classnames from 'classnames'
 import autobind from 'autobind-decorator'
 import styles from '../css/component.css'
 import topojson from 'topojson'
-import {Chart} from 'react-d3-map-core'
-import {Graticule} from 'react-d3-map-core'
-import {Mesh} from 'react-d3-map-core'
-import {Polygon} from 'react-d3-map-core'
-import {geoPath} from 'react-d3-map-core'
-
+import {Chart, Graticule, Mesh, Polygon, geoPath} from 'react-d3-map-core'
 
 import {projection as projectionFunc} from 'react-d3-map-core'
 
@@ -23,15 +18,11 @@ class D3MapComponent extends React.Component {
     }
   }
 
-  componentwillMount() {
+  componentDidMount() {
     // Artificially delay the loading, so the loading state stays visible for a while.
-    setTimeout(this.loadData, 20000);
-  }
-  loadData() {
-  // Artificially delay the loading, so the loading state stays visible for a while.
+    // setTimeout(this.loadData, 20000);
     d3.json("/components/d3map/worldmap.json", this.dataLoaded);
   }
-
 
   dataLoaded(err, data) {
     console.log(err,data);
@@ -58,8 +49,8 @@ class D3MapComponent extends React.Component {
     console.log(this.state.data);
 
     //  var dataCountries = topojson.mesh(topodata, topodata.objects.countries, function(a, b) { return a !== b; });
-    var dataLand = topojson.feature(topodata, topodata.objects.land);
-    var dataCountries = topojson.feature(topodata, topodata.objects.countries);
+    // var dataLand = topojson.feature(topodata, topodata.objects.land);
+    // var dataCountries = topojson.feature(topodata, topodata.objects.countries);
     var scale = (width + 1) / 2 / Math.PI;
     var translate = [width / 2, height / 2];
     var precision = .1;
@@ -77,8 +68,9 @@ class D3MapComponent extends React.Component {
 
     return (
       <div {...this.props}>
-
-        <Chart
+        {
+          this.state.data
+        ? <Chart
            title= {title}
            width= {width}
            height= {height}
@@ -89,30 +81,31 @@ class D3MapComponent extends React.Component {
              scale= {scale}
              translate= {translate}
              precision= {precision}
-             geoPath= {geoPath}
+             geoPath= {geo}
            />
            <Polygon
              width= {width}
              height= {height}
-             data= {dataLand}
+             data= {topojson.feature(topodata, topodata.objects.land)}
              projection = {projection}
              scale= {scale}
              translate= {translate}
              precision= {precision}
-             geoPath= {geoPath}
+             geoPath= {geo}
            />
            <Mesh
              width= {width}
              height= {height}
-             data= {dataCountries}
+             data= {topojson.feature(topodata, topodata.objects.countries)}
              projection = {projection}
              scale= {scale}
              translate= {translate}
              precision= {precision}
-             geoPath= {geoPath}
+             geoPath= {geo}
            />
          </Chart>
-
+         :<div >no</div>
+        }
       </div>
     )
 
