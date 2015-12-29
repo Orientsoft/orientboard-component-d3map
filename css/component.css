@@ -4,12 +4,13 @@
   overflow: hidden;
   resize: none;
 }
-.polygon {
-  fill: #333;
-}
 
 .mesh {
   fill: none;
   stroke: #fff;
   stroke-linejoin: round;
+}
+
+.polygon {
+  fill: #333;
 }
