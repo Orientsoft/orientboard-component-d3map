@@ -3,15 +3,18 @@ import React from 'react'
 import classnames from 'classnames'
 import autobind from 'autobind-decorator'
 import styles from '../css/component.css'
-import Datamap from 'datamaps'
+
 import d3 from 'd3'
+import {Modal, Button} from 'react-bootstrap'
+import NewD3MapConfigModal from './new-component-modal'
 
 @autobind
 class D3MapComponent extends React.Component {
   constructor(props) {
     super(props)
     this.state = {
-
+      topoJSONURL: this.props.data.topoJSONURL || "http://localhost:3000/components/d3map/liangshan.json"
+      ,topoScope : this.props.data.topoScope || "liangshan"
     }
   }
   componentDidMount() {
@@ -23,6 +26,8 @@ class D3MapComponent extends React.Component {
 	}
 
 	componentDidUpdate() {
+    console.log(this.state)
+
 		this.drawMap();
 	}
 
@@ -39,59 +44,75 @@ class D3MapComponent extends React.Component {
 	}
 
 
-	drawMap() {
-		const map = new Datamap(Object.assign({}, { ...this.props }, {
-			element: this.refs.container,
-      geographyConfig: {
-			     dataUrl: '/components/d3map/liangshan.json',
-           highlightBorderColor: '#B7B7B7'
-			},
-			scope: 'liangshan', //important
-      height: this.props.h,
-      width: this.props.w,
-      
-      fills: {
-          defaultFill: '#f0af0a',
-          lt50: 'rgba(0,244,244,0.9)',
-          gt50: 'red'
-      },
-      data: {
-        '071': {fillKey: 'lt50' },
-        '513424': {fillKey: 'gt50' }
-      },
-      setProjection: function(element) {
-         var projection = d3.geo.mercator()
-           .center([102, 27.7])
-           //.rotate([4.4, 0])
-           .scale(6000)
-           .translate([element.offsetWidth / 2, element.offsetHeight / 2])
+  drawMap() {
 
-         console.log(element.offsetWidth,element.offsetHeight)
-         var path = d3.geo.path()
-           .projection(projection);
+     //var mapdata = require("../assets/liangshan.geo.json")
 
-         return {path: path, projection: projection};
-       }
+     var mapdata = require("../assets/mapdata/china.json")
+     //var mapdata = require("../assets/mapdata/geometryProvince/12.json")
 
-		}))
+     var height = this.props.h
+     var width = this.props.w
 
-		if (this.props.arc) {
-			map.arc(this.props.arc, this.props.arcOptions);
-		}
+    // create a first guess for the projection
+     var center = d3.geo.centroid(mapdata)
+     var scale  = 150
+     var offset = [width/2, height/2]
 
-		if (this.props.bubbles) {
-			map.bubbles(this.props.bubbles, this.props.bubblesOptions);
-		}
+     var projection = d3.geo.mercator().scale(scale).center(center)
+         .translate(offset)
 
-		if (this.props.graticule) {
-			map.graticule();
-		}
+     // create the path
+     var path = d3.geo.path().projection(projection)
 
-		if (this.props.labels) {
-			map.labels();
-		}
-	}
+     // using the path determine the bounds of the current map and use
+     // these to determine better values for the scale and translation
+     var bounds  = path.bounds(mapdata)
+     var hscale  = scale*(width - 20)  / (bounds[1][0] - bounds[0][0])
+     var vscale  = scale*(height - 20) / (bounds[1][1] - bounds[0][1])
+     var scale   = (hscale < vscale) ? hscale : vscale
+     console.log(hscale, vscale, scale)
+     var offset  = [width - (bounds[0][0] + bounds[1][0])/2,
+                       height - (bounds[0][1] + bounds[1][1])/2]
 
+     // new projection
+     projection = d3.geo.mercator().center(center)
+       .scale(scale).translate(offset);
+     path = path.projection(projection)
+
+    var svg = d3.select(this.refs.container).append("svg")
+        .attr("width", width)
+        .attr("height", height)
+
+    svg.append("rect").attr('width', width).attr('height', height)
+          .style('stroke', 'black').style('fill', 'none');
+
+    //draw map path
+    svg.selectAll("path").data(mapdata.features).enter().append("path")
+          .attr("d", path)
+          .style("fill", 'grey')
+          .style("stroke-width", "1")
+          .style("stroke", '#aaa')
+
+    //draw subunit-label from properties.name
+
+      svg.selectAll(".subunit-label")
+        .data(mapdata.features)
+        .enter().append("text")
+            .attr("class", function(d) { return "subunit-label " + d.properties.id; })
+            .attr("transform", function(d) {
+                  return "translate(" + (path.centroid(d)[0] - d.properties.name.length * 5  ) + ',' + path.centroid(d)[1] + ")";
+                })
+            .attr("dy", ".1em")
+            .text(function(d) { return d.properties.name; })
+            .attr('fill','blue')
+            //.attr('fill','#ccc')
+            .attr('font-size','10px')
+
+
+
+
+  }
 
   render() {
 
@@ -107,7 +128,8 @@ class D3MapComponent extends React.Component {
   toJson() {
     // return the data you want to save as an object
     return {
-
+      topoJSONURL: this.state.topoJSONURL
+      ,topoScope : this.state.topoScope
     }
   }
 }
@@ -121,5 +143,6 @@ class D3MapComponent extends React.Component {
 //   master: {}
 // , edit: false
 // }
+D3MapComponent.NewComponentConfig = NewD3MapConfigModal
 
 export default D3MapComponent
