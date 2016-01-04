@@ -13,8 +13,8 @@ class D3MapComponent extends React.Component {
   constructor(props) {
     super(props)
     this.state = {
-      topoJSONURL: this.props.data.topoJSONURL || "http://localhost:3000/components/d3map/liangshan.json"
-      ,topoScope : this.props.data.topoScope || "liangshan"
+      topoJSONURL: this.props.data.topoJSONURL || "http://localhost:3000/components/d3map/china.json"
+      ,topoScope : this.props.data.topoScope || ""
     }
   }
   componentDidMount() {
@@ -46,43 +46,43 @@ class D3MapComponent extends React.Component {
 
   drawMap() {
 
-     //var mapdata = require("../assets/liangshan.geo.json")
 
-     var mapdata = require("../assets/mapdata/china.json")
-     //var mapdata = require("../assets/mapdata/geometryProvince/12.json")
+    //var mapdata = require("../assets/liangshan.geo.json")
+    var mapdata = require("../assets/mapdata/china.json")
+    //var mapdata = require("../assets/mapdata/geometryProvince/12.json")
 
-     var height = this.props.h
-     var width = this.props.w
+    var height = this.props.h
+    var width = this.props.w
 
     // create a first guess for the projection
-     var center = d3.geo.centroid(mapdata)
-     var scale  = 150
-     var offset = [width/2, height/2]
+    var center = d3.geo.centroid(mapdata)
+    var scale  = 150
+    var offset = [width/2, height/2]
 
-     var projection = d3.geo.mercator().scale(scale).center(center)
+    var projection = d3.geo.mercator().scale(scale).center(center)
          .translate(offset)
 
-     // create the path
-     var path = d3.geo.path().projection(projection)
+    // create the path
+    var path = d3.geo.path().projection(projection)
 
-     // using the path determine the bounds of the current map and use
-     // these to determine better values for the scale and translation
-     var bounds  = path.bounds(mapdata)
-     var hscale  = scale*(width - 20)  / (bounds[1][0] - bounds[0][0])
-     var vscale  = scale*(height - 20) / (bounds[1][1] - bounds[0][1])
-     var scale   = (hscale < vscale) ? hscale : vscale
-     console.log(hscale, vscale, scale)
-     var offset  = [width - (bounds[0][0] + bounds[1][0])/2,
-                       height - (bounds[0][1] + bounds[1][1])/2]
+    // using the path determine the bounds of the current map and use
+    // these to determine better values for the scale and translation
+    var bounds  = path.bounds(mapdata)
+    var hscale  = scale*(width - 20)  / (bounds[1][0] - bounds[0][0])
+    var vscale  = scale*(height - 20) / (bounds[1][1] - bounds[0][1])
+    var scale   = (hscale < vscale) ? hscale : vscale
+    console.log(hscale, vscale, scale)
+    var offset  = [width - (bounds[0][0] + bounds[1][0])/2,
+                   height - (bounds[0][1] + bounds[1][1])/2]
 
-     // new projection
-     projection = d3.geo.mercator().center(center)
+    // new projection
+    projection = d3.geo.mercator().center(center)
        .scale(scale).translate(offset);
-     path = path.projection(projection)
+    path = path.projection(projection)
 
     var svg = d3.select(this.refs.container).append("svg")
-        .attr("width", width)
-        .attr("height", height)
+      .attr("width", width)
+          .attr("height", height)
 
     svg.append("rect").attr('width', width).attr('height', height)
           .style('stroke', 'black').style('fill', 'none');
@@ -94,23 +94,20 @@ class D3MapComponent extends React.Component {
           .style("stroke-width", "1")
           .style("stroke", '#aaa')
 
-    //draw subunit-label from properties.name
+     //draw subunit-label from properties.name
 
       svg.selectAll(".subunit-label")
-        .data(mapdata.features)
-        .enter().append("text")
-            .attr("class", function(d) { return "subunit-label " + d.properties.id; })
-            .attr("transform", function(d) {
+          .data(mapdata.features)
+          .enter().append("text")
+              .attr("class", function(d) { return "subunit-label " + d.properties.id; })
+              .attr("transform", function(d) {
                   return "translate(" + (path.centroid(d)[0] - d.properties.name.length * 5  ) + ',' + path.centroid(d)[1] + ")";
                 })
-            .attr("dy", ".1em")
-            .text(function(d) { return d.properties.name; })
-            .attr('fill','blue')
-            //.attr('fill','#ccc')
-            .attr('font-size','10px')
-
-
-
+                .attr("dy", ".1em")
+                .text(function(d) { return d.properties.name; })
+                .attr('fill','blue')
+                //.attr('fill','#ccc')
+                .attr('font-size','10px')
 
   }
 
